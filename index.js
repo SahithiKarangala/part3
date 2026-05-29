@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+app.use(express.json())
 
 let directory = [
     { 
@@ -23,6 +24,12 @@ let directory = [
       "number": "39-23-6423122"
     }
 ]
+
+const generateId = () =>{
+    const maxId = directory.length>0 ? Math.max(... directory.map(p=>Number(p.id))) : 0
+    return String(maxId + 1)
+}
+
 
 app.get('/api/persons', (request, response) => {
     response.json(directory)
@@ -49,6 +56,24 @@ app.delete('/api/persons/:id',(request, response)=>{
     }
     directory = directory.filter(p=>p.id !== id)
     response.status(204).end()
+})
+
+app.post('/api/persons',(request,response)=>{
+    const body = request.body 
+    if(!body.name || !body.number){
+        return response.status(400).json({error: 'Name or number is missing'})
+    }
+    const nameExists = directory.find(p=>p.name === body.name)
+    if(nameExists){
+        return response.status(409).json({error: 'conatct already exists'})
+    }
+    const newPerson = {
+        id: generateId(),
+        name: body.name,
+        number: body.number
+    }
+    directory = directory.concat(newPerson)
+    response.json(newPerson)
 })
 
 const PORT = 3001
