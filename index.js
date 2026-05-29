@@ -41,6 +41,16 @@ app.get('/api/persons/:id',(request,response)=>{
     response.json(person)
 })
 
+app.delete('/api/persons/:id',(request, response)=>{
+    const id = request.params.id
+    const directoryToBeDeleted = directory.find(p=>p.id === id)
+    if(!directoryToBeDeleted){
+        return response.status(404).json({error: 'Person not found'})
+    }
+    directory = directory.filter(p=>p.id !== id)
+    response.status(204).end()
+})
+
 const PORT = 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
