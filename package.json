@@ -1,0 +1,24 @@
+{
+  "name": "phonebook-backend",
+  "version": "1.0.0",
+  "description": "This is backend project exercise in part3 of fullstack open course",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo \"Error: no test specified\" && exit 1 "
+  },
+  "repository": {
+    "type": "git",
+    "url": "/Users/sahithi_ritu/Documents/fullStackOpen/part3/.git/"
+  },
+  "keywords": [
+    "express",
+    "api"
+  ],
+  "author": "Sahithi",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
