@@ -1,7 +1,10 @@
+require('dotenv').config()
 const express = require('express')
+const Contact = require('./models/contacts')
 const morgan = require('morgan')
 const cors = require('cors')
 const app = express()
+const mongoose = require('mongoose') 
 
 app.use(express.json())
 app.use(cors())
@@ -17,28 +20,7 @@ morgan.token('body', (request,response)=>{
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let directory = [
-    { 
-      "id": "1",
-      "name": "Arto Hellas", 
-      "number": "040-123456"
-    },
-    { 
-      "id": "2",
-      "name": "Ada Lovelace", 
-      "number": "39-44-5323523"
-    },
-    { 
-      "id": "3",
-      "name": "Dan Abramov", 
-      "number": "12-43-234345"
-    },
-    { 
-      "id": "4",
-      "name": "Mary Poppendieck", 
-      "number": "39-23-6423122"
-    }
-]
+let directory = []
 
 const generateId = () =>{
     const maxId = directory.length>0 ? Math.max(... directory.map(p=>Number(p.id))) : 0
@@ -47,7 +29,9 @@ const generateId = () =>{
 
 
 app.get('/api/persons', (request, response) => {
-    response.json(directory)
+    Contact.find({}).then(directory =>{
+        response.json(directory)
+    })
 })
 
 app.get('/info',(request, response)=>{
@@ -82,16 +66,25 @@ app.post('/api/persons',(request,response)=>{
     if(nameExists){
         return response.status(409).json({error: 'conatct already exists'})
     }
-    const newPerson = {
+    const newContact = new Contact({
         id: generateId(),
         name: body.name,
         number: body.number
-    }
-    directory = directory.concat(newPerson)
-    response.json(newPerson)
+    })
+    newContact.save().then(result => {
+        response.json(result)
+        console.log('added to contacts!')
+    })
 })
 
-const PORT = process.env.PORT || 3001
+app.use((error, request, response, next)=>{
+    if(error.name === 'CastError'){
+        return response.status(400).send({error: 'malformatted id'})
+    }
+    next(error)
+})
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
