@@ -35,26 +35,28 @@ app.get('/api/persons', (request, response) => {
 })
 
 app.get('/info',(request, response)=>{
-    const date = new Date()
-    response.send(`<p>Phonebook has info for ${directory.length} people</br> ${date}</p>`)
+    Contact.find({}).then(directory => {
+        const date = new Date()
+        response.json(`Phonebook has info for ${directory.length} people. ${date}`)
+    })
 })
 
-app.get('/api/persons/:id',(request,response)=>{
-    const person = directory.find(p=>p.id === request.params.id)
-    if(!person){
-    return response.status(404).json({error: 'Person not found'})
-    }
-    response.json(person)
+app.get('/api/persons/:id',(request,response,next)=>{
+
+    Contact.findById(request.params.id).then(contact => {
+        if(contact){
+            response.json(contact)
+        }else{
+            reponse.status(404).end()
+        }
+    }).catch(error => next(error))
 })
 
-app.delete('/api/persons/:id',(request, response)=>{
+app.delete('/api/persons/:id',(request, response, next)=>{
     const id = request.params.id
-    const directoryToBeDeleted = directory.find(p=>p.id === id)
-    if(!directoryToBeDeleted){
-        return response.status(404).json({error: 'Person not found'})
-    }
-    directory = directory.filter(p=>p.id !== id)
-    response.status(204).end()
+    Contact.findByIdAndDelete(id).then(result =>{
+        response.status(204).end()
+    }).catch(error=> next(error))
 })
 
 app.post('/api/persons',(request,response)=>{
@@ -62,10 +64,10 @@ app.post('/api/persons',(request,response)=>{
     if(!body.name || !body.number){
         return response.status(400).json({error: 'Name or number is missing'})
     }
-    const nameExists = directory.find(p=>p.name === body.name)
-    if(nameExists){
-        return response.status(409).json({error: 'conatct already exists'})
-    }
+    // const nameExists = directory.find(p=>p.name === body.name)
+    // if(nameExists){
+    //     return response.status(409).json({error: 'conatct already exists'})
+    // }
     const newContact = new Contact({
         id: generateId(),
         name: body.name,
@@ -77,12 +79,39 @@ app.post('/api/persons',(request,response)=>{
     })
 })
 
-app.use((error, request, response, next)=>{
-    if(error.name === 'CastError'){
-        return response.status(400).send({error: 'malformatted id'})
+
+app.put('/api/persons/:id',(req,res,next)=>{
+    const {name, number} = req.body
+    Contact.findById(req.params.id).then(result =>{
+        if(!result){
+            return res.status(404).json({error: 'contact not founf'})
+        }
+
+        result.name = name
+        result.number = number
+
+        return result.save().then(updatedContact =>{
+            res.json(updatedContact)
+        })
+    }).catch(error => next(error))
+})
+
+const unknownEndpoint = (req,res)=>{
+    res.status(404).send({error: 'unknown endpoint'})
+}
+
+app.use(unknownEndpoint)
+
+const errorHandler = (error, req,res,next)=>{
+    console.error(error.message) 
+
+    if (error.name === 'CastError'){
+        return res.status(400).send({error: 'malformed id'})
     }
     next(error)
-})
+}
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT
 app.listen(PORT, () => {
