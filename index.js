@@ -59,11 +59,11 @@ app.delete('/api/persons/:id',(request, response, next)=>{
     }).catch(error=> next(error))
 })
 
-app.post('/api/persons',(request,response)=>{
+app.post('/api/persons',(request,response,next)=>{
     const body = request.body 
-    if(!body.name || !body.number){
-        return response.status(400).json({error: 'Name or number is missing'})
-    }
+    //if(!body.name || !body.number){
+    //    return response.status(400).json({error: 'Name or number is missing'})
+    //}
     // const nameExists = directory.find(p=>p.name === body.name)
     // if(nameExists){
     //     return response.status(409).json({error: 'conatct already exists'})
@@ -76,6 +76,10 @@ app.post('/api/persons',(request,response)=>{
     newContact.save().then(result => {
         response.json(result)
         console.log('added to contacts!')
+    })
+    .catch(error => {
+        console.log(error)
+        next(error)
     })
 })
 
@@ -107,6 +111,8 @@ const errorHandler = (error, req,res,next)=>{
 
     if (error.name === 'CastError'){
         return res.status(400).send({error: 'malformed id'})
+    }else if(error.name === 'ValidationError'){
+        return res.status(400).json({error:error.message})
     }
     next(error)
 }
